@@ -4,6 +4,7 @@ import Vue from 'vue';
 import Router from 'vue-router';
 import ElementUI from 'element-ui';
 import axios from 'axios';
+import jQuery from 'jquery';
 
 //引入模块
 import Login from '@/components/Login.vue';
@@ -15,7 +16,7 @@ import bundle from '@/components/warehouse/bundle.vue';
 Vue.use(Router);
 Vue.use(ElementUI);
 
-axios.defaults.baseURL = 'http://192.168.1.106:8080/XJS/';
+axios.defaults.baseURL = 'http://192.168.1.107:8080/XJS/';
 axios.defaults.timeout = 10000;
 
 export default new Router({

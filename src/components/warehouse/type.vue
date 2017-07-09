@@ -143,7 +143,7 @@
           })
         )
           .then(function (res) {
-            self.$message("删除用户成功");
+            self.$message("删除种类成功");
             self.getTypeData();
           });
       },

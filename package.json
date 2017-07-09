@@ -2,7 +2,7 @@
   "name": "crazy_stone",
   "version": "1.0.0",
   "description": "A Vue.js project",
-  "author": "邓启堯 <676081195@qq.com>",
+  "author": "不辞远 <676081195@qq.com>",
   "private": true,
   "scripts": {
     "dev": "node build/dev-server.js",
@@ -12,6 +12,7 @@
   "dependencies": {
     "axios": "^0.16.1",
     "element-ui": "^1.3.2",
+    "jquery": "^3.2.1",
     "vue": "^2.2.6",
     "vue-router": "^2.3.1"
   },
