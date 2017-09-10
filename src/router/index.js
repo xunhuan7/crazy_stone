@@ -16,8 +16,9 @@ import bundle from '@/components/warehouse/bundle.vue';
 Vue.use(Router);
 Vue.use(ElementUI);
 
-axios.defaults.baseURL = 'http://192.168.1.107:8080/XJS/';
+axios.defaults.baseURL = 'http://192.168.1.103:8080/XJS/';
 axios.defaults.timeout = 10000;
+axios.defaults.withCredentials = true;
 
 export default new Router({
   mode: 'history',

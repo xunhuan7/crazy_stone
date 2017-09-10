@@ -44,9 +44,55 @@
             <el-option v-for="item in add_bundle.all_type" :key="item.id" :value="item.name + item.num"></el-option>
           </el-select>
         </el-form-item>
+        <br>
         <el-form-item label="新匝编号">
           <el-input v-model="add_bundle.add_num"></el-input>
         </el-form-item>
+        <br>
+        <el-form-item label="板材名">
+          <el-input v-model="add_bundle.add_slateName"></el-input>
+        </el-form-item>
+        <br>
+        <el-form-item label="单价">
+          <el-input v-model="add_bundle.add_price"></el-input>
+        </el-form-item>
+        <br>
+        <el-form-item label="匝备注">
+          <el-input v-model="add_bundle.add_description"></el-input>
+        </el-form-item>
+      </el-form>
+      <br>
+      <el-form style="text-align: center" class="add_bundle_rows">
+        <el-row>
+          <el-button type="primary" @click="addBundleRow">添加一行（米）</el-button>
+        </el-row>
+        <br>
+        <el-row class="add_bundle_row">
+          <el-col :span="5">
+            <el-input class="add_bundle_width"></el-input>
+          </el-col>
+          <el-col :span="4">*</el-col>
+          <el-col :span="5">
+            <el-input class="add_bundle_height"></el-input>
+          </el-col>
+          <el-col :span="4">片数</el-col>
+          <el-col :span="5">
+            <el-input class="add_bundle_num"></el-input>
+          </el-col>
+        </el-row>
+        <el-row class="add_bundle_row">
+          <el-col :span="5">
+            <el-input class="add_bundle_width"></el-input>
+          </el-col>
+          <el-col :span="4">*</el-col>
+          <el-col :span="5">
+            <el-input class="add_bundle_height"></el-input>
+          </el-col>
+          <el-col :span="4">片数</el-col>
+          <el-col :span="5">
+            <el-input class="add_bundle_num"></el-input>
+          </el-col>
+        </el-row>
       </el-form>
       <br>
       <span slot="footer" class="dialog-footer">
@@ -127,10 +173,7 @@
         <template scope="scope">
           <el-button size="small"
                      @click="handleEdit(scope.row.user.id,scope.row.user.loginName,scope.row.user.userName,scope.row.roleList[0].roleName,scope.row.user.loginName)">
-            操作
-          </el-button>
-          <el-button size="small">
-            操
+            出库
           </el-button>
         </template>
       </el-table-column>
@@ -140,7 +183,7 @@
 
 <script>
   import axios from 'axios';
-  import jQuery from 'jquery';
+  import $ from 'jquery';
   let qs = require("qs");
 
   export default {
@@ -161,9 +204,11 @@
         table_data: [],
         // 添加匝
         add_bundle: {
-          all_type: [],
           add_type: '',
-          add_num: ''
+          add_num: '',
+          add_slateName: '',
+          add_price: '',
+          add_description: ''
         }
       }
     },
@@ -175,6 +220,10 @@
           .then(function (res) {
             self.query_bundle.all_type = res.data.list;
             self.add_bundle.all_type = res.data.list;
+            let list = res.data.list;
+            for (let i = 0; i < list.length; i++) {
+              sessionStorage.setItem(list[i].name + list[i].num, list[i].id);
+            }
           });
       },
       // 获取所有匝信息
@@ -216,9 +265,45 @@
       addBundle() {
         this.config.add_bundle_visible = true;
       },
+      // 匝中的板材信息
+      addBundleRow(){
+        $('<div class="el-row" class="add_bundle_row">' +
+          '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_width"></div></div>' +
+          '<div class="el-col el-col-4">*</div>' +
+          '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_height"></div></div>' +
+          '<div class="el-col el-col-4">片数</div>' +
+          '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_num"></div></div>' +
+          '</div>').appendTo(".add_bundle_rows");
+      },
       // 提交添加
       submitAddBundle(){
+        let self = this;
+        let kind_id = sessionStorage.getItem(self.add_bundle.add_type),
+          data = [];
+        $(".add_bundle_row").each(function () {
+          let num = $(this).find(".add_bundle_num > input").val();
+          let width = $(this).find(".add_bundle_width > input").val();
+          let height = $(this).find(".add_bundle_height > input").val();
+          if (num) {
+            for (let i = 0; i < num; i++) {
+              data.push({
+                length: width,
+                height: height
+              });
+            }
+          }
+        });
+        axios.post('stabKindAndSlate_addStabKind.ajax', {
+          kindId: kind_id,
+          num: self.add_bundle.add_num,
+          slateName: self.add_bundle.add_slateName,
+          price: self.add_bundle.add_price,
+          description: self.add_bundle.add_description,
+          data: data
+        })
+          .then(function (res) {
 
+          })
       }
     },
     mounted: function () {
