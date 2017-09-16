@@ -17,15 +17,13 @@
             <i class="el-icon-star-off"></i>用户管理
           </el-menu-item>
           <el-submenu index="2">
-            <template slot="title"><i class="el-icon-star-off"></i>仓库管理</template>
+            <template slot="title"><i class="el-icon-star-off"></i>库存管理</template>
             <el-menu-item index="2-1" @click="chooseFunc('21')">种类管理</el-menu-item>
-            <el-menu-item index="2-2" @click="chooseFunc('22')">匝数管理</el-menu-item>
+            <el-menu-item index="2-2" @click="chooseFunc('22')">匝管理</el-menu-item>
           </el-submenu>
-          <el-submenu index="3">
-            <template slot="title"><i class="el-icon-star-off"></i>导航三</template>
-            <el-menu-item index="3-1">选项1</el-menu-item>
-            <el-menu-item index="3-2">选项2</el-menu-item>
-          </el-submenu>
+          <el-menu-item index="3" @click="chooseFunc('3')">
+            <i class="el-icon-star-off"></i>加工间
+          </el-menu-item>
         </el-menu>
       </aside>
       <!--主体部分-->
@@ -45,9 +43,9 @@
     data() {
       return {
         config: {
-          role: '开发人员',
+          role: '',
           active_func: '1',
-          username: 'Jason'
+          username: ''
         }
       }
     },
@@ -70,16 +68,22 @@
           case '22':
             this.$router.push("/warehouse/bundle");
             break;
+          case '3':
+            this.$router.push("/process_room");
+            break;
           default:
             alert("点击了" + which);
         }
       },
-      // TODO:获取登录用户信息
+      // 获取登录用户信息
       getUserInfo() {
         let self = this;
         axios.post('user_queryCurrentUser.ajax')
           .then(function (res) {
-
+            if (res.data.data == true) {
+              self.config.role = res.data.role.roleName;
+              self.config.username = res.data.current_user.loginName;
+            }
           });
       }
     },

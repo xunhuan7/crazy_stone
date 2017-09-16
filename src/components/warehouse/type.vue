@@ -4,7 +4,7 @@
     <!--面包屑导航-->
     <el-breadcrumb separator="/" class="bread-nav">
       <el-breadcrumb-item>首页</el-breadcrumb-item>
-      <el-breadcrumb-item>仓库管理</el-breadcrumb-item>
+      <el-breadcrumb-item>库存管理</el-breadcrumb-item>
       <el-breadcrumb-item>种类管理</el-breadcrumb-item>
     </el-breadcrumb>
 
@@ -30,7 +30,7 @@
     </el-col>
 
     <!--结果表格-->
-    <el-table :data="table_data" style="width: 100%">
+    <el-table :data="bundle_table_data" style="width: 100%">
       <el-table-column type="index"></el-table-column>
       <el-table-column label="ID" v-if="config.id_show">
         <template scope="scope">
@@ -102,7 +102,7 @@
           type: ''
         },
         // 种类信息表格
-        table_data: []
+        bundle_table_data: []
       }
     },
     methods: {
@@ -111,7 +111,7 @@
         let self = this;
         axios.post('kind_queryAllKind.ajax')
           .then(function (res) {
-            self.table_data = res.data.list;
+            self.bundle_table_data = res.data.list;
           });
       },
       // 添加新种类

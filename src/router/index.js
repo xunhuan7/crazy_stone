@@ -12,11 +12,12 @@ import Index from '@/components/Index.vue';
 import user from '@/components/user/user.vue';
 import type from '@/components/warehouse/type.vue';
 import bundle from '@/components/warehouse/bundle.vue';
+import process_room from '@/components/process_room/process_room.vue';
 
 Vue.use(Router);
 Vue.use(ElementUI);
 
-axios.defaults.baseURL = 'http://192.168.1.103:8080/XJS/';
+axios.defaults.baseURL = 'http://192.168.1.102:8080/XJS/';
 axios.defaults.timeout = 10000;
 axios.defaults.withCredentials = true;
 
@@ -46,6 +47,11 @@ export default new Router({
           path: '/warehouse/bundle',
           name: 'bundle',
           component: bundle
+        },
+        {
+          path: '/process_room',
+          name: 'process_room',
+          component: process_room
         }
       ]
     }

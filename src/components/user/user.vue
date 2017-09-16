@@ -41,7 +41,7 @@
     </el-col>
 
     <!--结果表格-->
-    <el-table :data="table_data" style="width: 100%">
+    <el-table :data="bundle_table_data" style="width: 100%">
       <el-table-column label="ID" v-if="config.id_show">
         <template scope="scope">
           <el-tag>{{ scope.row.user.id }}</el-tag>
@@ -139,7 +139,7 @@
           ]
         },
         // 用户信息表格
-        table_data: []
+        bundle_table_data: []
       }
     },
     methods: {
@@ -148,7 +148,7 @@
         let self = this;
         axios.post('user_queryAllUsers.ajax')
           .then(function (res) {
-            self.table_data = res.data.list;
+            self.bundle_table_data = res.data.list;
           });
       },
       // 添加新用户

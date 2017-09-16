@@ -4,7 +4,7 @@
     <!--面包屑导航-->
     <el-breadcrumb separator="/" class="bread-nav">
       <el-breadcrumb-item>首页</el-breadcrumb-item>
-      <el-breadcrumb-item>仓库管理</el-breadcrumb-item>
+      <el-breadcrumb-item>库存管理</el-breadcrumb-item>
       <el-breadcrumb-item>匝管理</el-breadcrumb-item>
     </el-breadcrumb>
 
@@ -57,7 +57,7 @@
           <el-input v-model="add_bundle.add_price"></el-input>
         </el-form-item>
         <br>
-        <el-form-item label="匝备注">
+        <el-form-item label="备注">
           <el-input v-model="add_bundle.add_description"></el-input>
         </el-form-item>
       </el-form>
@@ -101,8 +101,8 @@
       </span>
     </el-dialog>
 
-    <!--结果表格-->
-    <el-table :data="table_data" style="width: 100%">
+    <!--匝信息结果表格-->
+    <el-table :data="bundle_table_data" style="width: 100%">
       <el-table-column type="index"></el-table-column>
       <el-table-column label="ID" v-if="config.id_show">
         <template scope="scope">
@@ -129,12 +129,12 @@
           <span>{{ scope.row.out_time }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="入库时片数">
+      <el-table-column label="入库片数">
         <template scope="scope">
           <span><el-tag type="danger">{{ scope.row.originalCount }}</el-tag></span>
         </template>
       </el-table-column>
-      <el-table-column label="入库时总面积">
+      <el-table-column label="入库面积">
         <template scope="scope">
           <span>{{ scope.row.originalAcreage }}</span>
         </template>
@@ -171,13 +171,50 @@
       </el-table-column>
       <el-table-column label="操作">
         <template scope="scope">
-          <el-button size="small"
-                     @click="handleEdit(scope.row.user.id,scope.row.user.loginName,scope.row.user.userName,scope.row.roleList[0].roleName,scope.row.user.loginName)">
+          <el-button size="small" @click="outputBundle(scope.row.id)">
             出库
           </el-button>
         </template>
       </el-table-column>
     </el-table>
+
+    <!--出库模态框-->
+    <el-dialog title="出库" :visible.sync="config.output_bundle_visible" size="tiny">
+      <el-table :data="slate_table_data" ref="multipleTable" style="width: 100%" id="output_table">
+        <el-table-column type="selection">
+        </el-table-column>
+        <el-table-column label="ID">
+          <template scope="scope">
+            <el-tag type="primary">{{ scope.row.id }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="板材名">
+          <template scope="scope">
+            <el-tag type="danger">{{ scope.row.slateName }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="价格">
+          <template scope="scope">
+            <span>{{ scope.row.price }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="宽">
+          <template scope="scope">
+            <el-tag>{{ scope.row.length }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="高">
+          <template scope="scope">
+            <el-tag>{{ scope.row.height }}</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="config.output_bundle_visible = false">取 消</el-button>
+        <el-button type="primary" @click="submitOutputBundle">出 库</el-button>
+      </span>
+    </el-dialog>
+
   </section>
 </template>
 
@@ -190,9 +227,9 @@
     data() {
       return {
         config: {
-          // id列不显示，传参使用
           id_show: false,
           add_bundle_visible: false,
+          output_bundle_visible: false
         },
         // 根据种类、匝编号查询匝信息
         query_bundle: {
@@ -201,7 +238,7 @@
           query_type: ''
         },
         // 匝信息表格
-        table_data: [],
+        bundle_table_data: [],
         // 添加匝
         add_bundle: {
           add_type: '',
@@ -209,7 +246,10 @@
           add_slateName: '',
           add_price: '',
           add_description: ''
-        }
+        },
+        // 板材信息表格
+        slate_table_data: [],
+        multipleSelection: []
       }
     },
     methods: {
@@ -231,7 +271,7 @@
         let self = this;
         axios.post('stabKindAndSlate_queryAllStabKind.ajax')
           .then(function (res) {
-            self.table_data = res.data.list;
+            self.bundle_table_data = res.data.list;
           });
       },
       // 根据种类、匝编号查询匝信息
@@ -258,14 +298,14 @@
           })
         )
           .then(function (res) {
-            self.table_data = res.data.list;
+            self.bundle_table_data = res.data.list;
           });
       },
-      // 添加新匝
+      // 调出添加匝模态框
       addBundle() {
         this.config.add_bundle_visible = true;
       },
-      // 匝中的板材信息
+      // 添加一行板材数据
       addBundleRow(){
         $('<div class="el-row" class="add_bundle_row">' +
           '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_width"></div></div>' +
@@ -275,7 +315,7 @@
           '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_num"></div></div>' +
           '</div>').appendTo(".add_bundle_rows");
       },
-      // 提交添加
+      // 提交添加新匝
       submitAddBundle(){
         let self = this;
         let kind_id = sessionStorage.getItem(self.add_bundle.add_type),
@@ -302,8 +342,36 @@
           data: data
         })
           .then(function (res) {
-
+            if (res.data.data == true) {
+              self.getBundleData();
+              self.config.add_bundle_visible = false;
+              self.$message({
+                message: res.data.msg,
+                type: 'info',
+                duration: 800
+              });
+            } else {
+              self.$message(res.data.msg);
+            }
           })
+      },
+      // 调出出库模态框
+      outputBundle(id){
+        let self = this;
+        self.config.output_bundle_visible = true;
+        axios.post('stabKindAndSlate_querySlateByStabKindId.ajax', qs.stringify({
+            stabKindId: id
+          })
+        )
+          .then(function (res) {
+            if (res.data.data == true) {
+              self.slate_table_data = res.data.list;
+            }
+          });
+      },
+      // 提交出库
+      submitOutputBundle(){
+       $("#output_table ")
       }
     },
     mounted: function () {
