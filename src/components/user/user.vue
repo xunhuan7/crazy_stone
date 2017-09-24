@@ -47,7 +47,7 @@
           <el-tag>{{ scope.row.user.id }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column type="index"></el-table-column>
+      <el-table-column type="index" width="100"></el-table-column>
       <el-table-column label="用户名">
         <template scope="scope">
           <el-tag type="primary">{{ scope.row.user.userName }}</el-tag>
@@ -97,6 +97,9 @@
       </span>
     </el-dialog>
 
+    <!--分页-->
+    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="handleCurrentChange" style="float: right;margin-top: 20px"></el-pagination>
+
   </section>
 </template>
 
@@ -139,16 +142,25 @@
           ]
         },
         // 用户信息表格
-        bundle_table_data: []
+        bundle_table_data: [],
+        //分页信息
+        page:{
+            total:80,
+            tagret_page:1
+        }
       }
     },
     methods: {
       // 获取所有用户信息
       getUserData() {
         let self = this;
-        axios.post('user_queryAllUsers.ajax')
+        axios.post('user_queryAllUsers.ajax',qs.stringify({
+          startPage:self.page.tagret_page
+        })
+        )
           .then(function (res) {
             self.bundle_table_data = res.data.list;
+            self.page.total = res.data.page.totalCount;
           });
       },
       // 添加新用户
@@ -208,7 +220,7 @@
         this.edit.password = '';
         this.edit.current_login_name = current_user;
       },
-      //提交编辑
+      // 提交编辑
       submitEdit() {
         let self = this;
         let data_update_role;
@@ -245,6 +257,11 @@
               });
             }
           });
+      },
+      // 分页
+      handleCurrentChange(page){
+          this.page.tagret_page = page;
+          this.getUserData();
       }
     },
     mounted: function () {

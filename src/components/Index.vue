@@ -16,12 +16,15 @@
           <el-menu-item index="1" @click="chooseFunc('1')">
             <i class="el-icon-star-off"></i>用户管理
           </el-menu-item>
-          <el-submenu index="2">
+          <el-menu-item index="2" @click="chooseFunc('2')">
+            <i class="el-icon-star-off"></i>客户管理
+          </el-menu-item>
+          <el-submenu index="3">
             <template slot="title"><i class="el-icon-star-off"></i>库存管理</template>
-            <el-menu-item index="2-1" @click="chooseFunc('21')">种类管理</el-menu-item>
-            <el-menu-item index="2-2" @click="chooseFunc('22')">匝管理</el-menu-item>
+            <el-menu-item index="3-1" @click="chooseFunc('31')">种类管理</el-menu-item>
+            <el-menu-item index="3-2" @click="chooseFunc('32')">匝管理</el-menu-item>
           </el-submenu>
-          <el-menu-item index="3" @click="chooseFunc('3')">
+          <el-menu-item index="4" @click="chooseFunc('4')">
             <i class="el-icon-star-off"></i>加工间
           </el-menu-item>
         </el-menu>
@@ -62,13 +65,16 @@
           case '1':
             this.$router.push("/user");
             break;
-          case '21':
+          case '2':
+            this.$router.push("/custom");
+            break;
+          case '31':
             this.$router.push("/warehouse/type");
             break;
-          case '22':
+          case '32':
             this.$router.push("/warehouse/bundle");
             break;
-          case '3':
+          case '4':
             this.$router.push("/process_room");
             break;
           default:

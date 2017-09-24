@@ -11,14 +11,14 @@
     <!--查询匝-->
     <el-col :span="24" class="toolbar">
       <el-form :inline="true">
-        <el-col :span="6">
+        <el-col :span="7">
           <el-form-item label="材料种类">
             <el-select v-model="query_bundle.query_type" placeholder="请选择">
               <el-option v-for="item in query_bundle.all_type" :key="item.id" :value="item.name + item.num"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="7">
           <el-form-item label="匝编号">
             <el-input placeholder="选填" v-model="query_bundle.query_num"></el-input>
           </el-form-item>
@@ -171,7 +171,7 @@
       </el-table-column>
       <el-table-column label="操作">
         <template scope="scope">
-          <el-button size="small" @click="outputBundle(scope.row.id)">
+          <el-button size="small" type="primary" @click="outputBundle(scope.row.id)">
             出库
           </el-button>
         </template>
@@ -180,7 +180,7 @@
 
     <!--出库模态框-->
     <el-dialog title="出库" :visible.sync="config.output_bundle_visible" size="tiny">
-      <el-table :data="slate_table_data" ref="multipleTable" style="width: 100%" id="output_table">
+      <el-table :data="slate_table_data" ref="multipleTable" style="width: 100%" @selection-change="selectOutput">
         <el-table-column type="selection">
         </el-table-column>
         <el-table-column label="ID">
@@ -249,7 +249,10 @@
         },
         // 板材信息表格
         slate_table_data: [],
-        multipleSelection: []
+        multipleSelection: [],
+        // 出库
+        selects: [],
+        bundle_code: ''
       }
     },
     methods: {
@@ -358,6 +361,7 @@
       // 调出出库模态框
       outputBundle(id){
         let self = this;
+        self.bundle_code = id;
         self.config.output_bundle_visible = true;
         axios.post('stabKindAndSlate_querySlateByStabKindId.ajax', qs.stringify({
             stabKindId: id
@@ -369,9 +373,30 @@
             }
           });
       },
+      // 选中出库
+      selectOutput(selects){
+        this.selects = selects;
+      },
       // 提交出库
       submitOutputBundle(){
-       $("#output_table ")
+        let self = this,
+          ids = self.selects.map(item => item.id).toString();
+        axios.post('stabKindAndSlate_outStock.ajax', qs.stringify({
+            ids: ids,
+            stabKindId: self.bundle_code
+          })
+        )
+          .then(function (res) {
+            if (res.data.data == true) {
+              self.$message({
+                message: "出库成功",
+                type: 'success',
+                duration: '1000'
+              });
+              self.getBundleData();
+              self.config.output_bundle_visible = false;
+            }
+          });
       }
     },
     mounted: function () {
