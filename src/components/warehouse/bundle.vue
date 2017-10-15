@@ -80,6 +80,7 @@
             <el-input class="add_bundle_num"></el-input>
           </el-col>
         </el-row>
+        <br/>
         <el-row class="add_bundle_row">
           <el-col :span="5">
             <el-input class="add_bundle_width"></el-input>
@@ -93,6 +94,7 @@
             <el-input class="add_bundle_num"></el-input>
           </el-col>
         </el-row>
+        <br/>
       </el-form>
       <br>
       <span slot="footer" class="dialog-footer">
@@ -179,7 +181,7 @@
     </el-table>
 
     <!--出库模态框-->
-    <el-dialog title="出库" :visible.sync="config.output_bundle_visible" size="tiny">
+    <el-dialog title="出库" :visible.sync="config.output_bundle_visible">
       <el-table :data="slate_table_data" ref="multipleTable" style="width: 100%" @selection-change="selectOutput">
         <el-table-column type="selection">
         </el-table-column>
@@ -272,7 +274,7 @@
       // 获取所有匝信息
       getBundleData(){
         let self = this;
-        axios.post('stabKindAndSlate_queryAllStabKind.ajax')
+        axios.post('stabKindAndSlate_queryStabKindByPage.ajax')
           .then(function (res) {
             self.bundle_table_data = res.data.list;
           });
@@ -316,7 +318,7 @@
           '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_height"></div></div>' +
           '<div class="el-col el-col-4">片数</div>' +
           '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_num"></div></div>' +
-          '</div>').appendTo(".add_bundle_rows");
+          '</div><br/>').appendTo(".add_bundle_rows");
       },
       // 提交添加新匝
       submitAddBundle(){
@@ -324,9 +326,9 @@
         let kind_id = sessionStorage.getItem(self.add_bundle.add_type),
           data = [];
         $(".add_bundle_row").each(function () {
-          let num = $(this).find(".add_bundle_num > input").val();
-          let width = $(this).find(".add_bundle_width > input").val();
-          let height = $(this).find(".add_bundle_height > input").val();
+          let num = $(this).find(".add_bundle_num > input").val(),
+            width = $(this).find(".add_bundle_width > input").val(),
+            height = $(this).find(".add_bundle_height > input").val();
           if (num) {
             for (let i = 0; i < num; i++) {
               data.push({

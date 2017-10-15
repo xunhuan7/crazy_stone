@@ -14,18 +14,21 @@
       <aside>
         <el-menu unique-opened :default-active="config.active_func" class="aside-menu">
           <el-menu-item index="1" @click="chooseFunc('1')">
-            <i class="el-icon-star-off"></i>用户管理
+            <i class="el-icon-star-on"></i>用户管理
           </el-menu-item>
           <el-menu-item index="2" @click="chooseFunc('2')">
-            <i class="el-icon-star-off"></i>客户管理
+            <i class="el-icon-star-on"></i>客户管理
           </el-menu-item>
           <el-submenu index="3">
-            <template slot="title"><i class="el-icon-star-off"></i>库存管理</template>
+            <template slot="title"><i class="el-icon-star-on"></i>库存管理</template>
             <el-menu-item index="3-1" @click="chooseFunc('31')">种类管理</el-menu-item>
             <el-menu-item index="3-2" @click="chooseFunc('32')">匝管理</el-menu-item>
           </el-submenu>
           <el-menu-item index="4" @click="chooseFunc('4')">
-            <i class="el-icon-star-off"></i>加工间
+            <i class="el-icon-star-on"></i>加工间
+          </el-menu-item>
+          <el-menu-item index="5" @click="chooseFunc('5')">
+            <i class="el-icon-star-on"></i>订单管理
           </el-menu-item>
         </el-menu>
       </aside>
@@ -77,8 +80,11 @@
           case '4':
             this.$router.push("/process_room");
             break;
+          case '5':
+            this.$router.push("/order");
+            break;
           default:
-            alert("点击了" + which);
+            console.log("点击了" + which);
         }
       },
       // 获取登录用户信息
