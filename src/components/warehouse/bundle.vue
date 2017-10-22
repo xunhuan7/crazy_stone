@@ -223,6 +223,7 @@
 <script>
   import axios from 'axios';
   import $ from 'jquery';
+
   let qs = require("qs");
 
   export default {
@@ -259,7 +260,7 @@
     },
     methods: {
       //获取所有材料种类
-      getStoneType(){
+      getStoneType() {
         let self = this;
         axios.post('kind_queryAllKind.ajax')
           .then(function (res) {
@@ -272,7 +273,7 @@
           });
       },
       // 获取所有匝信息
-      getBundleData(){
+      getBundleData() {
         let self = this;
         axios.post('stabKindAndSlate_queryStabKindByPage.ajax')
           .then(function (res) {
@@ -280,7 +281,7 @@
           });
       },
       // 根据种类、匝编号查询匝信息
-      getQueryBundleData(){
+      getQueryBundleData() {
         let self = this;
         let query_id;
         if (self.query_bundle.query_type == '' && self.query_bundle.query_num == '') {
@@ -311,7 +312,7 @@
         this.config.add_bundle_visible = true;
       },
       // 添加一行板材数据
-      addBundleRow(){
+      addBundleRow() {
         $('<div class="el-row" class="add_bundle_row">' +
           '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_width"></div></div>' +
           '<div class="el-col el-col-4">*</div>' +
@@ -321,7 +322,7 @@
           '</div><br/>').appendTo(".add_bundle_rows");
       },
       // 提交添加新匝
-      submitAddBundle(){
+      submitAddBundle() {
         let self = this;
         let kind_id = sessionStorage.getItem(self.add_bundle.add_type),
           data = [];
@@ -361,7 +362,7 @@
           })
       },
       // 调出出库模态框
-      outputBundle(id){
+      outputBundle(id) {
         let self = this;
         self.bundle_code = id;
         self.config.output_bundle_visible = true;
@@ -376,11 +377,11 @@
           });
       },
       // 选中出库
-      selectOutput(selects){
+      selectOutput(selects) {
         this.selects = selects;
       },
       // 提交出库
-      submitOutputBundle(){
+      submitOutputBundle() {
         let self = this,
           ids = self.selects.map(item => item.id).toString();
         axios.post('stabKindAndSlate_outStock.ajax', qs.stringify({

@@ -42,12 +42,12 @@
 
     <!--结果表格-->
     <el-table :data="bundle_table_data" style="width: 100%">
+      <el-table-column type="index" width="20"></el-table-column>
       <el-table-column label="ID" v-if="config.id_show">
         <template scope="scope">
           <el-tag>{{ scope.row.user.id }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column type="index" width="100"></el-table-column>
       <el-table-column label="用户名">
         <template scope="scope">
           <el-tag type="primary">{{ scope.row.user.userName }}</el-tag>
@@ -98,13 +98,15 @@
     </el-dialog>
 
     <!--分页-->
-    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="handleCurrentChange" style="float: right;margin-top: 20px"></el-pagination>
+    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="handleCurrentChange"
+                   style="float: right;margin-top: 20px"></el-pagination>
 
   </section>
 </template>
 
 <script>
   import axios from 'axios';
+
   let qs = require("qs");
 
   export default {
@@ -144,9 +146,9 @@
         // 用户信息表格
         bundle_table_data: [],
         //分页信息
-        page:{
-            total:80,
-            tagret_page:1
+        page: {
+          total: 80,
+          tagret_page: 1
         }
       }
     },
@@ -154,9 +156,9 @@
       // 获取所有用户信息
       getUserData() {
         let self = this;
-        axios.post('user_queryAllUsers.ajax',qs.stringify({
-          startPage:self.page.tagret_page
-        })
+        axios.post('user_queryAllUsers.ajax', qs.stringify({
+            startPage: self.page.tagret_page
+          })
         )
           .then(function (res) {
             self.bundle_table_data = res.data.list;
@@ -259,9 +261,9 @@
           });
       },
       // 分页
-      handleCurrentChange(page){
-          this.page.tagret_page = page;
-          this.getUserData();
+      handleCurrentChange(page) {
+        this.page.tagret_page = page;
+        this.getUserData();
       }
     },
     mounted: function () {

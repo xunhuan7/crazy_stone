@@ -85,19 +85,23 @@
         </el-row>
         <br>
         <el-row class="add_output_row">
-          <el-col :span="3">规格：</el-col>
-          <el-col :span="3">
+          <el-col :span="2">规格:</el-col>
+          <el-col :span="2">
             <el-input class="add_output_width" placeholder="长"></el-input>
           </el-col>
           <el-col :span="1">*</el-col>
-          <el-col :span="3">
+          <el-col :span="2">
             <el-input class="add_output_height" placeholder="宽"></el-input>
           </el-col>
-          <el-col :span="3">名称：</el-col>
+          <el-col :span="1">*</el-col>
+          <el-col :span="2">
+            <el-input class="add_output_num" placeholder="片数"></el-input>
+          </el-col>
+          <el-col :span="2">名称:</el-col>
           <el-col :span="5">
             <el-input class="add_output_name"></el-input>
           </el-col>
-          <el-col :span="3">单价：</el-col>
+          <el-col :span="3">单价:</el-col>
           <el-col :span="3">
             <el-input class="add_output_price"></el-input>
           </el-col>
@@ -116,7 +120,6 @@
 <script>
   import axios from 'axios';
   import $ from 'jquery';
-  let qs = require("qs");
 
   export default {
     data() {
@@ -140,7 +143,7 @@
     },
     methods: {
       // 获取加工间表格信息
-      getProcessData(){
+      getProcessData() {
         let self = this;
         axios.post('processor_queryProcessSlateByPage.ajax')
           .then(function (res) {
@@ -148,21 +151,27 @@
           });
       },
       // 调出返库模态框
-      showBackWareHouse(slateId, stabKindId){
+      showBackWareHouse(slateId, stabKindId) {
+        $(".add_back_rows > *:not(div:eq(0))").remove();
+        $('<br><div class="el-row" class="add_back_row">' +
+          '<div class="el-col el-col-10"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_back_width"></div></div>' +
+          '<div class="el-col el-col-4">*</div>' +
+          '<div class="el-col el-col-10"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_back_height"></div></div>' +
+          '</div><br>').appendTo(".add_back_rows");
         this.config.back_warehouse_visible = true;
         this.back.processSlateId = slateId;
         this.back.stabKindId = stabKindId;
       },
       // 添加一行返库数据
-      addBackRow(){
+      addBackRow() {
         $('<div class="el-row" class="add_back_row">' +
           '<div class="el-col el-col-10"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_back_width"></div></div>' +
           '<div class="el-col el-col-4">*</div>' +
           '<div class="el-col el-col-10"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_back_height"></div></div>' +
-          '</div><br/>').appendTo(".add_back_rows");
+          '</div><br>').appendTo(".add_back_rows");
       },
       // 提交返库
-      submitBackWarehouse(){
+      submitBackWarehouse() {
         let self = this,
           data = [];
         $(".add_back_row").each(function () {
@@ -195,36 +204,53 @@
           });
       },
       // 调出出成品模态框
-      showOutputProduct(slateId){
+      showOutputProduct(slateId) {
+        $(".add_output_rows > *:not(div:eq(0))").remove();
+        $('<br><div class="add_output_row el-row">' +
+          '<div class="el-col el-col-2">规格:</div>' +
+          '<div class="el-col el-col-2"><div class="add_output_width el-input"><input autocomplete="off" placeholder="长" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
+          '<div class="el-col el-col-1">*</div>' +
+          '<div class="el-col el-col-2"><div class="add_output_height el-input"><input autocomplete="off" placeholder="宽" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
+          '<div class="el-col el-col-1">*</div>' +
+          '<div class="el-col el-col-2"><div class="add_output_num el-input"><input autocomplete="off" placeholder="片数" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
+          '<div class="el-col el-col-2">名称:</div>' +
+          '<div class="el-col el-col-5"><div class="add_output_name el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
+          '<div class="el-col el-col-3">单价:</div>' +
+          '<div class="el-col el-col-3"><div class="add_output_price el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
+          '</div><br>').appendTo(".add_output_rows");
         this.config.output_product_visible = true;
         this.output.processSlateId = slateId;
       },
       // 添加一行出成品数据
-      addOutputRow(){
+      addOutputRow() {
         $('<div class="add_output_row el-row">' +
-          '<div class="el-col el-col-3">规格：</div>' +
-          '<div class="el-col el-col-3"><div class="add_output_width el-input"><input autocomplete="off" placeholder="长" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
+          '<div class="el-col el-col-2">规格:</div>' +
+          '<div class="el-col el-col-2"><div class="add_output_width el-input"><input autocomplete="off" placeholder="长" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
           '<div class="el-col el-col-1">*</div>' +
-          '<div class="el-col el-col-3"><div class="add_output_height el-input"><input autocomplete="off" placeholder="宽" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
-          '<div class="el-col el-col-3">名称：</div>' +
+          '<div class="el-col el-col-2"><div class="add_output_height el-input"><input autocomplete="off" placeholder="宽" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
+          '<div class="el-col el-col-1">*</div>' +
+          '<div class="el-col el-col-2"><div class="add_output_num el-input"><input autocomplete="off" placeholder="片数" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
+          '<div class="el-col el-col-2">名称:</div>' +
           '<div class="el-col el-col-5"><div class="add_output_name el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
-          '<div class="el-col el-col-3">单价：</div>' +
+          '<div class="el-col el-col-3">单价:</div>' +
           '<div class="el-col el-col-3"><div class="add_output_price el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner"></div></div>' +
-          '</div><br/>').appendTo(".add_output_rows");
+          '</div><br>').appendTo(".add_output_rows");
       },
       // 提交出成品
-      submitOutputProduct(){
+      submitOutputProduct() {
         let self = this,
           data = [];
         $(".add_output_row").each(function () {
           let width = $(this).find(".add_output_width > input").val(),
             height = $(this).find(".add_output_height > input").val(),
+            count = $(this).find(".add_output_num > input").val(),
             name = $(this).find(".add_output_name > input").val(),
             price = $(this).find(".add_output_price > input").val();
           if (width && height && name && price) {
             data.push({
               length: width,
               height: height,
+              count: count,
               slateName: name,
               price: price
             });
