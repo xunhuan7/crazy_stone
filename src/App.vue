@@ -2,7 +2,7 @@
 
   <div id="app">
 
-    <transition name="el-fade-in-linear">
+    <transition name="el-fade-in">
       <router-view></router-view>
     </transition>
 
@@ -30,5 +30,3 @@
     }
   }
 </script>
-
-<style></style>

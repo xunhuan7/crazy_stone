@@ -1,4 +1,5 @@
 <template>
+
   <section>
 
     <!--面包屑导航-->
@@ -10,40 +11,40 @@
     <!--添加新用户-->
     <el-col :span="24" class="toolbar">
       <el-form :inline="true">
-        <el-col :span="4">
+        <el-col :span="3">
           <el-form-item>
             <el-input placeholder="用户名" v-model="add_user.username"></el-input>
           </el-form-item>
         </el-col>
-        <el-col :span="5">
+        <el-col :span="3">
           <el-form-item>
             <el-input placeholder="账号" v-model="add_user.account_number"></el-input>
           </el-form-item>
         </el-col>
-        <el-col :span="5">
+        <el-col :span="3">
           <el-form-item>
             <el-input placeholder="密码" v-model="add_user.password"></el-input>
           </el-form-item>
         </el-col>
-        <el-col :span="3">
+        <el-col :span="2">
           <el-form-item>
             <el-select v-model="add_user.role" placeholder="请选择">
               <el-option v-for="item in add_user.roles" :key="item.value" :value="item.value"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="3" style="margin-left: 10%">
           <el-form-item>
-            <el-button type="primary" @click="addUser">添加新用户</el-button>
+            <el-button type="primary" @click="add_user.flag && addUser()">添加新用户</el-button>
           </el-form-item>
         </el-col>
       </el-form>
     </el-col>
 
     <!--结果表格-->
-    <el-table :data="bundle_table_data" style="width: 100%">
-      <el-table-column type="index" width="20"></el-table-column>
-      <el-table-column label="ID" v-if="config.id_show">
+    <el-table :data="bundle_table_data" style="width: 100%" v-loading="config.table_loading">
+      <el-table-column type="index" width="80"></el-table-column>
+      <el-table-column v-if="config.id_show">
         <template scope="scope">
           <el-tag>{{ scope.row.user.id }}</el-tag>
         </template>
@@ -74,8 +75,8 @@
       </el-table-column>
     </el-table>
 
-    <!--模态框-->
-    <el-dialog title="编辑用户信息" :visible.sync="config.dialogVisible" size="tiny" class="model">
+    <!--编辑用户信息模态框-->
+    <el-dialog title="编辑用户信息" :visible.sync="config.dialog_visible" size="tiny" class="model">
       <el-input v-model="edit.user_name">
         <template slot="prepend">用户名</template>
       </el-input>
@@ -92,19 +93,22 @@
         <el-option v-for="item in edit.update_roles" :key="item.value" :value="item.value"></el-option>
       </el-select>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="config.dialogVisible = false">取 消</el-button>
+        <el-button @click="config.dialog_visible = false">取 消</el-button>
         <el-button type="primary" @click="submitEdit">确 定</el-button>
       </span>
     </el-dialog>
 
     <!--分页-->
-    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="handleCurrentChange"
-                   style="float: right;margin-top: 20px"></el-pagination>
+    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="currentChange"
+                   style="float: right;margin-top: 20px">
+    </el-pagination>
 
   </section>
+
 </template>
 
 <script>
+
   import axios from 'axios';
 
   let qs = require("qs");
@@ -113,12 +117,15 @@
     data() {
       return {
         config: {
-          // id列不显示，传参使用
           id_show: false,
-          dialogVisible: false,
+          dialog_visible: false,
+          table_loading: false
         },
-        // 添加新用户
+        // 用户信息表格
+        bundle_table_data: [],
+        // 添加新用户 TODO:填充roles
         add_user: {
+          flag: true,
           userName: '',
           account_number: '',
           password: '',
@@ -129,7 +136,7 @@
             {value: '财务人员'}
           ]
         },
-        // 修改用户信息
+        // 编辑用户信息 TODO:填充update_roles
         edit: {
           id: '',
           user_name: '',
@@ -143,33 +150,40 @@
             {value: '财务人员'}
           ]
         },
-        // 用户信息表格
-        bundle_table_data: [],
-        //分页信息
+        // 分页信息
         page: {
-          total: 80,
-          tagret_page: 1
+          current_page: 1,
+          total: 0
         }
       }
     },
     methods: {
       // 获取所有用户信息
       getUserData() {
-        let self = this;
+        this.config.table_loading = true;
         axios.post('user_queryAllUsers.ajax', qs.stringify({
-            startPage: self.page.tagret_page
+            startPage: this.page.current_page
           })
         )
-          .then(function (res) {
-            self.bundle_table_data = res.data.list;
-            self.page.total = res.data.page.totalCount;
+          .then((res) => {
+            this.bundle_table_data = res.data.list;
+            this.page.total = res.data.page.totalCount;
+            this.config.table_loading = false;
           });
       },
-      // 添加新用户
+      // 添加新用户 TODO:data_role参照返回数据
       addUser() {
-        let self = this;
+        // 数据过滤
+        if (!this.add_user.username || !this.add_user.account_number || !this.add_user.password || !this.add_user.role) {
+          this.$message({
+            type: 'warning',
+            duration: 1000,
+            message: '请填写完整信息'
+          });
+          return;
+        }
         let data_role;
-        switch (self.add_user.role) {
+        switch (this.add_user.role) {
           case "管理员":
             data_role = 1;
             break;
@@ -180,41 +194,72 @@
             data_role = 3;
             break;
         }
+        this.add_user.flag = false;
         axios.post('user_addUser.ajax', qs.stringify({
-            userName: self.add_user.username,
+            userName: this.add_user.username,
             roleIds: data_role,
-            loginName: self.add_user.account_number,
-            password: self.add_user.password
+            loginName: this.add_user.account_number,
+            password: this.add_user.password
           })
         )
-          .then(function (res) {
+          .then((res) => {
+            this.add_user.flag = true;
             if (res.data.data === true) {
-              self.$message("添加用户成功");
-              self.getUserData();
+              this.$message("添加用户成功");
+              this.getUserData();
+              this.add_user.username = '';
+              this.add_user.account_number = '';
+              this.add_user.password = '';
+              this.add_user.role = '';
             } else {
-              self.$message({
-                showClose: true,
+              this.$message({
+                type: 'warning',
                 message: res.data.msg,
-                type: 'warning'
+                duration: 1000
               });
             }
           });
       },
-      // 删除用户
+      // 删除用户信息
       handleDelete(id) {
-        let self = this;
-        axios.post('user_deleteUserByIds.ajax', qs.stringify({
-            ids: id
-          })
-        )
-          .then(function (res) {
-            self.$message("删除用户成功");
-            self.getUserData();
+        this.$confirm('此操作将删除该用户, 是否继续?', '注意', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {// 确认删除，调用删除接口
+          this.config.table_loading = true;
+          axios.post('user_deleteUserByIds.ajax', qs.stringify({
+              ids: id
+            })
+          )
+            .then((res) => {
+              if (res.data.data === true) {
+                this.$message({
+                  type: 'success',
+                  duration: 800,
+                  message: '删除成功!'
+                });
+                this.getUserData();
+              } else {
+                this.$message({
+                  type: 'error',
+                  duration: 1000,
+                  message: res.data.msg
+                });
+                this.config.table_loading = false;
+              }
+            });
+        }).catch(() => {// 取消删除
+          this.$message({
+            type: 'info',
+            duration: 800,
+            message: '已取消删除'
           });
+        });
       },
-      // 编辑用户信息
+      // 编辑用户信息 TODO:最后一项参数冗余
       handleEdit(id, login_name, user_name, role, current_user) {
-        this.config.dialogVisible = true;
+        this.config.dialog_visible = true;
         this.edit.id = id;
         this.edit.login_name = login_name;
         this.edit.user_name = user_name;
@@ -222,11 +267,19 @@
         this.edit.password = '';
         this.edit.current_login_name = current_user;
       },
-      // 提交编辑
+      // 提交编辑 TODO:data_update_role参照返回数据，最后一项参数冗余
       submitEdit() {
-        let self = this;
+        // 数据过滤
+        if (!this.edit.login_name || !this.edit.user_name || !this.edit.password) {
+          this.$message({
+            type: 'warning',
+            duration: 1000,
+            message: '请填写完整信息'
+          });
+          return;
+        }
         let data_update_role;
-        switch (self.edit.update_role) {
+        switch (this.edit.update_role) {
           case "管理员":
             data_update_role = 1;
             break;
@@ -238,22 +291,22 @@
             break;
         }
         axios.post('user_updateUser.ajax', qs.stringify({
-            id: self.edit.id,
-            loginName: self.edit.login_name,
-            userName: self.edit.user_name,
-            password: self.edit.password,
+            id: this.edit.id,
+            loginName: this.edit.login_name,
+            userName: this.edit.user_name,
+            password: this.edit.password,
             roleIds: data_update_role,
-            currentLoginName: self.edit.current_login_name
+            currentLoginName: this.edit.current_login_name
           })
         )
-          .then(function (res) {
+          .then((res) => {
             if (res.data.data == true) {
-              self.config.dialogVisible = false;
-              self.$message("编辑成功");
-              self.getUserData();
+              this.config.dialog_visible = false;
+              this.$message("编辑成功");
+              this.getUserData();
             } else {
-              self.$message({
-                showClose: true,
+              this.$message({
+                duration: 1000,
                 message: res.data.msg,
                 type: 'warning'
               });
@@ -261,8 +314,8 @@
           });
       },
       // 分页
-      handleCurrentChange(page) {
-        this.page.tagret_page = page;
+      currentChange(page) {
+        this.page.current_page = page;
         this.getUserData();
       }
     },
@@ -270,9 +323,11 @@
       this.getUserData();
     }
   }
+
 </script>
 
 <style scoped>
+
   * {
     margin: 0;
   }

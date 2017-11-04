@@ -1,4 +1,5 @@
 <template>
+
   <section>
 
     <!--面包屑导航-->
@@ -11,24 +12,25 @@
     <!--查询匝-->
     <el-col :span="24" class="toolbar">
       <el-form :inline="true">
-        <el-col :span="7">
+        <el-col :span="6">
           <el-form-item label="材料种类">
             <el-select v-model="query_bundle.query_type" placeholder="请选择">
-              <el-option v-for="item in query_bundle.all_type" :key="item.id" :value="item.name + item.num"></el-option>
+              <el-option v-for="item in query_bundle.all_type" :key="item.id" :value="item.id"
+                         :label="item.name + '：' + item.num"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="7">
+        <el-col :span="6">
           <el-form-item label="匝编号">
             <el-input placeholder="选填" v-model="query_bundle.query_num"></el-input>
           </el-form-item>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="10">
           <el-form-item>
             <el-button type="primary" icon="search" @click="getQueryBundleData">查询</el-button>
           </el-form-item>
         </el-col>
-        <el-col :span="4">
+        <el-col :span="2">
           <el-form-item>
             <el-button type="success" @click="addBundle">添加匝</el-button>
           </el-form-item>
@@ -37,11 +39,12 @@
     </el-col>
 
     <!--添加匝模态框-->
-    <el-dialog title="添加匝" :visible.sync="config.add_bundle_visible" size="tiny">
+    <el-dialog title="添加匝" :visible.sync="config.add_bundle_visible" size="tiny" class="add_bundle_box">
       <el-form label-width="80px"><br>
         <el-form-item label="材料种类">
           <el-select v-model="add_bundle.add_type" placeholder="请选择">
-            <el-option v-for="item in add_bundle.all_type" :key="item.id" :value="item.name + item.num"></el-option>
+            <el-option v-for="item in add_bundle.all_type" :key="item.id" :value="item.id"
+                       :label="item.name + '：' + item.num"></el-option>
           </el-select>
         </el-form-item>
         <br>
@@ -94,19 +97,19 @@
             <el-input class="add_bundle_num"></el-input>
           </el-col>
         </el-row>
-        <br/>
+        <br class="clear"/>
       </el-form>
       <br>
       <span slot="footer" class="dialog-footer">
         <el-button @click="config.add_bundle_visible = false">取 消</el-button>
-        <el-button type="primary" @click="submitAddBundle">确 定</el-button>
+        <el-button type="primary" @click="submitAddBundle" v-loading="config.add_button_loading">确 定</el-button>
       </span>
     </el-dialog>
 
     <!--匝信息结果表格-->
-    <el-table :data="bundle_table_data" style="width: 100%">
-      <el-table-column type="index"></el-table-column>
-      <el-table-column label="ID" v-if="config.id_show">
+    <el-table :data="bundle_table_data" v-loading="config.bundle_table_loading">
+      <el-table-column type="index" width="80"></el-table-column>
+      <el-table-column v-if="false">
         <template scope="scope">
           <el-tag>{{ scope.row.id }}</el-tag>
         </template>
@@ -182,7 +185,8 @@
 
     <!--出库模态框-->
     <el-dialog title="出库" :visible.sync="config.output_bundle_visible">
-      <el-table :data="slate_table_data" ref="multipleTable" style="width: 100%" @selection-change="selectOutput">
+      <el-table :data="slate_table_data" ref="multipleTable" style="width: 100%" @selection-change="selectOutput"
+                v-loading="config.output_table_loading">
         <el-table-column type="selection">
         </el-table-column>
         <el-table-column label="ID">
@@ -213,14 +217,21 @@
       </el-table>
       <span slot="footer" class="dialog-footer">
         <el-button @click="config.output_bundle_visible = false">取 消</el-button>
-        <el-button type="primary" @click="submitOutputBundle">出 库</el-button>
+        <el-button type="primary" @click="submitOutputBundle" v-loading="config.output_button_loading">出 库</el-button>
       </span>
     </el-dialog>
 
+    <!--分页-->
+    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="currentChange"
+                   style="float: right;margin-top: 20px">
+    </el-pagination>
+
   </section>
+
 </template>
 
 <script>
+
   import axios from 'axios';
   import $ from 'jquery';
 
@@ -230,9 +241,12 @@
     data() {
       return {
         config: {
-          id_show: false,
           add_bundle_visible: false,
-          output_bundle_visible: false
+          output_bundle_visible: false,
+          bundle_table_loading: false,
+          add_button_loading: false,
+          output_table_loading: false,
+          output_button_loading: false
         },
         // 根据种类、匝编号查询匝信息
         query_bundle: {
@@ -244,6 +258,7 @@
         bundle_table_data: [],
         // 添加匝
         add_bundle: {
+          all_type: [],
           add_type: '',
           add_num: '',
           add_slateName: '',
@@ -255,62 +270,68 @@
         multipleSelection: [],
         // 出库
         selects: [],
-        bundle_code: ''
+        bundle_code: '',
+        // 分页
+        page: {
+          current_page: 1,
+          total: 0
+        }
       }
     },
     methods: {
+
       //获取所有材料种类
       getStoneType() {
-        let self = this;
         axios.post('kind_queryAllKind.ajax')
-          .then(function (res) {
-            self.query_bundle.all_type = res.data.list;
-            self.add_bundle.all_type = res.data.list;
-            let list = res.data.list;
-            for (let i = 0; i < list.length; i++) {
-              sessionStorage.setItem(list[i].name + list[i].num, list[i].id);
+          .then((res) => {
+              this.query_bundle.all_type = res.data.list;
+              this.add_bundle.all_type = res.data.list;
             }
-          });
+          )
+        ;
       },
+
       // 获取所有匝信息
       getBundleData() {
-        let self = this;
-        axios.post('stabKindAndSlate_queryStabKindByPage.ajax')
-          .then(function (res) {
-            self.bundle_table_data = res.data.list;
-          });
-      },
-      // 根据种类、匝编号查询匝信息
-      getQueryBundleData() {
-        let self = this;
-        let query_id;
-        if (self.query_bundle.query_type == '' && self.query_bundle.query_num == '') {
-          self.$message({
-            message: "查询参数不能为空",
-            type: 'warning',
-            duration: '1000'
-          });
-          return;
-        }
-        for (let i = 0; i < self.query_bundle.all_type.length; i++) {
-          if (self.query_bundle.all_type[i].name == self.query_bundle.query_type) {
-            query_id = self.query_bundle.all_type[i].id;
-            break;
-          }
-        }
-        axios.post('stabKindAndSlate_queryStabKindByKindIdOrNum.ajax', qs.stringify({
-            num: self.query_bundle.query_num,
-            id: query_id
+        this.config.bundle_table_loading = true;
+        axios.post('stabKindAndSlate_queryStabKindByPage.ajax', qs.stringify({
+            startPage: this.page.current_page
           })
         )
-          .then(function (res) {
-            self.bundle_table_data = res.data.list;
+          .then((res) => {
+            this.bundle_table_data = res.data.list;
+//            this.page.total = res.data.page.totalCount; TODO:总条数
+            this.config.bundle_table_loading = false;
           });
       },
+
+      // 根据种类、匝编号查询匝信息
+      getQueryBundleData() {
+        if (this.query_bundle.query_type == '' && this.query_bundle.query_num == '') {
+          this.getBundleData();
+          return;
+        }
+        this.config.bundle_table_loading = true;
+        axios.post('stabKindAndSlate_queryStabKindByKindIdOrNum.ajax', qs.stringify({
+            num: this.query_bundle.query_num,
+            id: this.query_bundle.query_type
+          })
+        )
+          .then((res) => { // TODO:查询结果分页
+            this.bundle_table_data = res.data.list;
+            this.query_bundle.query_type = '';
+            this.query_bundle.query_num = '';
+            this.config.bundle_table_loading = false;
+          });
+      },
+
       // 调出添加匝模态框
       addBundle() {
         this.config.add_bundle_visible = true;
+        $(".clear").nextAll().remove();
+        $(".add_bundle_box input").val('');
       },
+
       // 添加一行板材数据
       addBundleRow() {
         $('<div class="el-row" class="add_bundle_row">' +
@@ -321,85 +342,125 @@
           '<div class="el-col el-col-5"><div class="el-input"><input autocomplete="off" type="text" rows="2" validateevent="true" class="el-input__inner add_bundle_num"></div></div>' +
           '</div><br/>').appendTo(".add_bundle_rows");
       },
+
       // 提交添加新匝
       submitAddBundle() {
-        let self = this;
-        let kind_id = sessionStorage.getItem(self.add_bundle.add_type),
-          data = [];
-        $(".add_bundle_row").each(function () {
-          let num = $(this).find(".add_bundle_num > input").val(),
-            width = $(this).find(".add_bundle_width > input").val(),
-            height = $(this).find(".add_bundle_height > input").val();
-          if (num) {
-            for (let i = 0; i < num; i++) {
-              data.push({
-                length: width,
-                height: height
-              });
+//        if () { // 数据过滤
+//          return;
+//        }
+        // 确认添加
+        this.$confirm('确认添加吗?', '提示', {}).then(() => {
+          let kind_id = this.add_bundle.add_type,
+            data = [];
+          $(".add_bundle_row").each(function () {
+            let num = $(this).find(".add_bundle_num > input").val(),
+              width = $(this).find(".add_bundle_width > input").val(),
+              height = $(this).find(".add_bundle_height > input").val();
+            if (num) {
+              for (let i = 0; i < num; i++) {
+                data.push({
+                  length: width,
+                  height: height
+                });
+              }
             }
-          }
-        });
-        axios.post('stabKindAndSlate_addStabKind.ajax', {
-          kindId: kind_id,
-          num: self.add_bundle.add_num,
-          slateName: self.add_bundle.add_slateName,
-          price: self.add_bundle.add_price,
-          description: self.add_bundle.add_description,
-          data: data
-        })
-          .then(function (res) {
-            if (res.data.data == true) {
-              self.getBundleData();
-              self.config.add_bundle_visible = false;
-              self.$message({
-                message: res.data.msg,
-                type: 'info',
-                duration: 800
-              });
-            } else {
-              self.$message(res.data.msg);
-            }
+          });
+          this.config.add_button_loading = true;
+          axios.post('stabKindAndSlate_addStabKind.ajax', {
+            kindId: kind_id,
+            num: this.add_bundle.add_num,
+            slateName: this.add_bundle.add_slateName,
+            price: this.add_bundle.add_price,
+            description: this.add_bundle.add_description,
+            data: data
           })
+            .then((res) => {
+              if (res.data.data === true) {
+                this.config.add_button_loading = false;
+                this.config.add_bundle_visible = false;
+                this.getBundleData();
+                this.$message({
+                  message: '添加匝成功',
+                  type: 'info',
+                  duration: 800
+                });
+              } else {
+                this.$message({
+                  message: res.data.msg,
+                  type: 'warning',
+                  duration: 1000
+                });
+              }
+            })
+        });
       },
+
       // 调出出库模态框
       outputBundle(id) {
-        let self = this;
-        self.bundle_code = id;
-        self.config.output_bundle_visible = true;
+        this.bundle_code = id;
+        this.config.output_bundle_visible = true;
+        this.config.output_table_loading = true;
         axios.post('stabKindAndSlate_querySlateByStabKindId.ajax', qs.stringify({
             stabKindId: id
           })
         )
-          .then(function (res) {
-            if (res.data.data == true) {
-              self.slate_table_data = res.data.list;
+          .then((res) => {
+            if (res.data.data === true) {
+              this.config.output_table_loading = false;
+              this.slate_table_data = res.data.list;
             }
           });
       },
+
       // 选中出库
       selectOutput(selects) {
         this.selects = selects;
       },
+
       // 提交出库
       submitOutputBundle() {
-        let self = this,
-          ids = self.selects.map(item => item.id).toString();
-        axios.post('stabKindAndSlate_outStock.ajax', qs.stringify({
-            ids: ids,
-            stabKindId: self.bundle_code
-          })
-        )
-          .then(function (res) {
-            if (res.data.data == true) {
-              self.$message({
-                message: "出库成功",
-                type: 'success',
-                duration: '1000'
-              });
-              self.getBundleData();
-              self.config.output_bundle_visible = false;
-            }
+        // 未选择出库板材
+        if (this.selects.length == 0) {
+          this.$message({
+            message: "未选择出库板材",
+            type: 'warning',
+            duration: '1000'
           });
+          return;
+        }
+        this.$confirm('确认出库吗?', '提示', {}).then(() => {
+          let ids = this.selects.map(item => item.id).toString();
+          this.config.output_button_loading = true;
+          axios.post('stabKindAndSlate_outStock.ajax', qs.stringify({
+              ids: ids,
+              stabKindId: this.bundle_code
+            })
+          )
+            .then((res) => {
+              if (res.data.data === true) {
+                this.$message({
+                  message: "出库成功",
+                  type: 'success',
+                  duration: '800'
+                });
+                this.config.output_button_loading = false;
+                this.config.output_bundle_visible = false;
+                this.getBundleData();
+              } else {
+                this.$message({
+                  message: res.data.msg,
+                  type: 'warning',
+                  duration: '1000'
+                });
+              }
+            });
+        });
+      },
+
+      // 分页
+      currentChange(page) {
+        this.page.current_page = page;
+        this.getBundleData();
       }
     },
     mounted: function () {
@@ -407,9 +468,11 @@
       this.getStoneType();
     }
   }
+
 </script>
 
 <style scoped>
+
   * {
     margin: 0;
   }
@@ -427,4 +490,5 @@
   .toolbar .el-form-item {
     margin: 20px 0 5px 20px;
   }
+
 </style>

@@ -1,70 +1,72 @@
 <template>
+
   <el-row class="contain">
 
     <!--头部导航-->
     <el-col :span="24" class="header">
-      <el-col :span="4" class="role">{{ config.role }}</el-col>
-      <el-col :span="14" class="enterprise">后台管理系统</el-col>
-      <el-col :span="6" class="user-info">{{config.username}}</el-col>
+      <el-col :span="4" class="role">权限：{{ user.role }}</el-col>
+      <el-col :span="14" class="enterprise">张钰臻别偷看</el-col>
+      <el-col :span="6" class="user-info">欢迎您：{{user.username}}</el-col>
     </el-col>
 
     <!--内容区-->
     <el-col :span="24" class="main">
+
       <!--侧边栏-->
       <aside>
-        <el-menu unique-opened :default-active="config.active_func" class="aside-menu">
-          <el-menu-item index="1" @click="chooseFunc('1')">
+        <el-menu unique-opened default-active="1" class="aside-menu">
+          <el-menu-item index="1" @click="chooseRouter('1')">
             <i class="el-icon-star-on"></i>用户管理
           </el-menu-item>
-          <el-menu-item index="2" @click="chooseFunc('2')">
+          <el-menu-item index="2" @click="chooseRouter('2')">
             <i class="el-icon-star-on"></i>客户管理
           </el-menu-item>
           <el-submenu index="3">
             <template slot="title"><i class="el-icon-star-on"></i>库存管理</template>
-            <el-menu-item index="3-1" @click="chooseFunc('31')">种类管理</el-menu-item>
-            <el-menu-item index="3-2" @click="chooseFunc('32')">匝管理</el-menu-item>
+            <el-menu-item index="3-1" @click="chooseRouter('31')">种类管理</el-menu-item>
+            <el-menu-item index="3-2" @click="chooseRouter('32')">匝管理</el-menu-item>
           </el-submenu>
-          <el-menu-item index="4" @click="chooseFunc('4')">
+          <el-menu-item index="4" @click="chooseRouter('4')">
             <i class="el-icon-star-on"></i>加工间
           </el-menu-item>
-          <el-menu-item index="5" @click="chooseFunc('5')">
+          <el-menu-item index="5" @click="chooseRouter('5')">
             <i class="el-icon-star-on"></i>订单管理
           </el-menu-item>
         </el-menu>
       </aside>
+
       <!--主体部分-->
       <section>
-        <router-view></router-view>
+        <transition name="el-fade-in">
+          <router-view></router-view>
+        </transition>
       </section>
+
     </el-col>
 
   </el-row>
+
 </template>
 
 <script>
+
   import axios from 'axios';
+
   let qs = require("qs");
 
   export default {
     data() {
       return {
-        config: {
+        user: {
           role: '',
-          active_func: '1',
-          username: ''
+          username: sessionStorage.getItem('xjs_user')
         }
       }
     },
     methods: {
-      init() {
-        switch (this.config.active_func) {
-          case '1':
-            this.$router.push("/user");
-            break;
-        }
-      },
-      chooseFunc(which) {
-        switch (which) {
+      // 点击左侧导航栏选择路由
+      chooseRouter(index) {
+        switch (index) {
           case '1':
             this.$router.push("/user");
             break;
@@ -84,32 +86,29 @@
             this.$router.push("/order");
             break;
           default:
-            console.log("点击了" + which);
+            ;
         }
       },
-      // 获取登录用户信息
+      // 获取并展示用户权限和用户名
       getUserInfo() {
-        let self = this;
         axios.post('user_queryCurrentUser.ajax')
-          .then(function (res) {
-            if (res.data.data == true) {
-              self.config.role = res.data.role.roleName;
-              self.config.username = res.data.current_user.loginName;
+          .then((res) => {
+            if (res.data.data === true) {
+              this.user.role = res.data.current_user.userName;
+              this.user.username = res.data.current_user.loginName;
             }
           });
       }
     },
     mounted: function () {
-      this.init();
+      this.$router.push("/user");
       this.getUserInfo();
     }
   }
+
 </script>
 
 <style scoped>
-  body {
-    margin: 0;
-  }
 
   .contain {
     position: absolute;
@@ -139,8 +138,8 @@
   }
 
   .user-info {
-    font-size: 15px;
-    font-weight: 300;
+    font-size: 18px;
+    font-weight: 500;
   }
 
   /*主体*/
@@ -168,4 +167,5 @@
     overflow: scroll;
     padding: 8px;
   }
+
 </style>

@@ -4,7 +4,6 @@ import Vue from 'vue';
 import Router from 'vue-router';
 import ElementUI from 'element-ui';
 import axios from 'axios';
-import jQuery from 'jquery';
 
 //引入模块
 import Login from '@/components/Login.vue';
@@ -19,7 +18,7 @@ import order from '@/components/order/order.vue';
 Vue.use(Router);
 Vue.use(ElementUI);
 
-axios.defaults.baseURL = 'http://192.168.1.103:8080/XJS/';
+axios.defaults.baseURL = 'http://192.168.1.108:8080/XJS/';
 axios.defaults.timeout = 10000;
 // 是否使用跨域请求
 axios.defaults.withCredentials = true;
@@ -40,28 +39,23 @@ export default new Router({
           path: '/user',
           name: 'user',
           component: user
-        },
-        {
+        }, {
           path: '/custom',
           name: 'custom',
           component: custom
-        },
-        {
+        }, {
           path: '/warehouse/type',
           name: 'type',
           component: type
-        },
-        {
+        }, {
           path: '/warehouse/bundle',
           name: 'bundle',
           component: bundle
-        },
-        {
+        }, {
           path: '/process_room',
           name: 'process_room',
           component: process_room
-        },
-        {
+        }, {
           path: '/order',
           name: 'order',
           component: order
