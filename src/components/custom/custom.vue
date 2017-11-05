@@ -30,7 +30,7 @@
     </el-col>
 
     <!--结果表格-->
-    <el-table :data="custom_table_data" style="width: 100%">
+    <el-table :data="custom_table_data" style="width: 100%" v-loading="config.custom_table_loading">
       <el-table-column type="index" width="80"></el-table-column>
       <el-table-column v-if="config.id_show">
         <template scope="scope">
@@ -49,7 +49,7 @@
       </el-table-column>
       <el-table-column label="操作">
         <template scope="scope">
-          <el-button size="small" @click="handleEdit( scope.row.name, scope.row.phone)">编辑</el-button>
+          <el-button size="small" @click="handleEdit( scope.row.name, scope.row.phone,scope.row.id)">编辑</el-button>
           <el-button size="small" type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
         </template>
       </el-table-column>
@@ -71,6 +71,11 @@
       </span>
     </el-dialog>
 
+    <!--分页-->
+    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="currentChange"
+                   style="float: right;margin-top: 20px">
+    </el-pagination>
+
   </section>
 
 </template>
@@ -86,6 +91,7 @@
       return {
         config: {
           id_show: false,
+          custom_table_loading: false,
           dialogVisible: false
         },
         // 客户信息表格
@@ -98,16 +104,28 @@
         // 修改客户信息
         edit_custom: {
           name: '',
-          phone: ''
+          phone: '',
+          id: ''
+        },
+        // 分页信息
+        page: {
+          current_page: 1,
+          total: 0
         }
       }
     },
     methods: {
       // 获取所有客户信息
       getCustomData() {
-        axios.post('customer_queryAllCustomer.ajax')
+        this.config.custom_table_loading = true;
+        axios.post('customer_queryAllCustomer.ajax', qs.stringify({
+          startPage: this.page.current_page
+        }))
           .then((res) => {
+            this.config.custom_table_loading = false;
             this.custom_table_data = res.data.list;
+            this.page.total = res.data.page.totalCount;
+
           });
       },
       // 添加新客户
@@ -123,7 +141,7 @@
               this.getCustomData();
             } else {
               this.$message({
-                showClose: true,
+                duration: 1000,
                 message: res.data.msg,
                 type: 'warning'
               });
@@ -131,26 +149,62 @@
           });
       },
       // 编辑客户信息
-      handleEdit(name, phone) {
+      handleEdit(name, phone, id) {
         this.config.dialogVisible = true;
         this.edit_custom.name = name;
         this.edit_custom.phone = phone;
+        this.edit_custom.id = id;
       },
       // 提交编辑
       submitEdit() {
-
+        axios.post('customer_editCustomer.ajax', qs.stringify({
+          name: this.edit_custom.name,
+          phone: this.edit_custom.phone,
+          id: this.edit_custom.id
+        })).then((res) => {
+          if (res.data.data === true) {
+            this.config.dialogVisible = false;
+            this.$message({
+              duration: 1000,
+              message: '编辑客户信息成功',
+              type: 'success'
+            });
+          } else {
+            this.$message({
+              duration: 1000,
+              message: res.data.msg,
+              type: 'warning'
+            });
+          }
+        })
       },
       // 删除客户
       handleDelete(id) {
-        let self = this;
-        axios.post('customer_deleteCustomerByIds.ajax', qs.stringify({
-            ids: id
-          })
-        )
-          .then(function (res) {
-            self.$message("删除客户成功");
-            self.getCustomData();
+        this.$confirm('此操作将删除该用户, 是否继续?', '注意', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {// 确认删除，调用删除接口
+          axios.post('customer_deleteCustomerByIds.ajax', qs.stringify({
+              ids: id
+            })
+          )
+            .then((res) => {
+              this.$message("删除客户成功");
+              this.getCustomData();
+            });
+        }).catch(() => {// 取消删除
+          this.$message({
+            type: 'info',
+            duration: 1000,
+            message: '已取消删除'
           });
+        });
+      },
+      // 分页
+      currentChange(page) {
+        this.page.current_page = page;
+        this.getUserData();
       }
     },
     mounted: function () {

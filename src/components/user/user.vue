@@ -26,16 +26,18 @@
             <el-input placeholder="密码" v-model="add_user.password"></el-input>
           </el-form-item>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="3">
           <el-form-item>
             <el-select v-model="add_user.role" placeholder="请选择">
-              <el-option v-for="item in add_user.roles" :key="item.value" :value="item.value"></el-option>
+              <el-option v-for="item in add_user.roles" :key="item.id" :value="item.id"
+                         :label="item.roleName"></el-option>
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="3" style="margin-left: 10%">
           <el-form-item>
-            <el-button type="primary" @click="add_user.flag && addUser()">添加新用户</el-button>
+            <el-button type="primary" @click="add_user.flag && addUser()" v-loading="config.add_user_loading">添加新用户
+            </el-button>
           </el-form-item>
         </el-col>
       </el-form>
@@ -44,7 +46,7 @@
     <!--结果表格-->
     <el-table :data="bundle_table_data" style="width: 100%" v-loading="config.table_loading">
       <el-table-column type="index" width="80"></el-table-column>
-      <el-table-column v-if="config.id_show">
+      <el-table-column v-if="false">
         <template scope="scope">
           <el-tag>{{ scope.row.user.id }}</el-tag>
         </template>
@@ -90,11 +92,12 @@
       </el-input>
       <br><br>
       <el-select v-model="edit.update_role" placeholder="请选择" style="display: block">
-        <el-option v-for="item in edit.update_roles" :key="item.value" :value="item.value"></el-option>
+        <el-option v-for="item in edit.update_roles" :key="item.id" :value="item.id" :label="item.roleName"></el-option>
       </el-select>
       <span slot="footer" class="dialog-footer">
         <el-button @click="config.dialog_visible = false">取 消</el-button>
-        <el-button type="primary" @click="submitEdit">确 定</el-button>
+        <el-button type="primary" @click="edit.flag && submitEdit()"
+                   v-loading="config.edit_user_loading">确 定</el-button>
       </span>
     </el-dialog>
 
@@ -117,38 +120,32 @@
     data() {
       return {
         config: {
-          id_show: false,
           dialog_visible: false,
-          table_loading: false
+          table_loading: false,
+          add_user_loading: false,
+          edit_user_loading: false
         },
         // 用户信息表格
         bundle_table_data: [],
-        // 添加新用户 TODO:填充roles
+        // 添加新用户
         add_user: {
           flag: true,
           userName: '',
           account_number: '',
           password: '',
           role: '',
-          roles: [
-            {value: '工人'},
-            {value: '管理员'},
-            {value: '财务人员'}
-          ]
+          roles: []
         },
-        // 编辑用户信息 TODO:填充update_roles
+        // 编辑用户信息
         edit: {
+          flag: true,
           id: '',
           user_name: '',
           login_name: '',
           current_login_name: '',
           password: '',
           update_role: '',
-          update_roles: [
-            {value: '工人'},
-            {value: '管理员'},
-            {value: '财务人员'}
-          ]
+          update_roles: []
         },
         // 分页信息
         page: {
@@ -171,7 +168,15 @@
             this.config.table_loading = false;
           });
       },
-      // 添加新用户 TODO:data_role参照返回数据
+      // 获取所有角色
+      getAllRoles() {
+        axios.post('role_queryAllRole.ajax')
+          .then((res) => {
+            this.add_user.roles = res.data.list;
+            this.edit.update_roles = res.data.list;
+          });
+      },
+      // 添加新用户
       addUser() {
         // 数据过滤
         if (!this.add_user.username || !this.add_user.account_number || !this.add_user.password || !this.add_user.role) {
@@ -182,28 +187,18 @@
           });
           return;
         }
-        let data_role;
-        switch (this.add_user.role) {
-          case "管理员":
-            data_role = 1;
-            break;
-          case "工人":
-            data_role = 2;
-            break;
-          case "财务人员":
-            data_role = 3;
-            break;
-        }
         this.add_user.flag = false;
+        this.config.add_user_loading = true;
         axios.post('user_addUser.ajax', qs.stringify({
             userName: this.add_user.username,
-            roleIds: data_role,
+            roleIds: this.add_user.role,
             loginName: this.add_user.account_number,
             password: this.add_user.password
           })
         )
           .then((res) => {
             this.add_user.flag = true;
+            this.config.add_user_loading = false;
             if (res.data.data === true) {
               this.$message("添加用户成功");
               this.getUserData();
@@ -236,7 +231,7 @@
               if (res.data.data === true) {
                 this.$message({
                   type: 'success',
-                  duration: 800,
+                  duration: 1000,
                   message: '删除成功!'
                 });
                 this.getUserData();
@@ -252,12 +247,12 @@
         }).catch(() => {// 取消删除
           this.$message({
             type: 'info',
-            duration: 800,
+            duration: 1000,
             message: '已取消删除'
           });
         });
       },
-      // 编辑用户信息 TODO:最后一项参数冗余
+      // 编辑用户信息
       handleEdit(id, login_name, user_name, role, current_user) {
         this.config.dialog_visible = true;
         this.edit.id = id;
@@ -267,7 +262,7 @@
         this.edit.password = '';
         this.edit.current_login_name = current_user;
       },
-      // 提交编辑 TODO:data_update_role参照返回数据，最后一项参数冗余
+      // 提交编辑
       submitEdit() {
         // 数据过滤
         if (!this.edit.login_name || !this.edit.user_name || !this.edit.password) {
@@ -278,28 +273,20 @@
           });
           return;
         }
-        let data_update_role;
-        switch (this.edit.update_role) {
-          case "管理员":
-            data_update_role = 1;
-            break;
-          case "工人":
-            data_update_role = 2;
-            break;
-          case "财务人员":
-            data_update_role = 3;
-            break;
-        }
+        this.edit.flag = false;
+        this.config.edit_user_loading = true;
         axios.post('user_updateUser.ajax', qs.stringify({
             id: this.edit.id,
             loginName: this.edit.login_name,
             userName: this.edit.user_name,
             password: this.edit.password,
-            roleIds: data_update_role,
+            roleIds: this.edit.update_role,
             currentLoginName: this.edit.current_login_name
           })
         )
           .then((res) => {
+            this.edit.flag = true;
+            this.config.edit_user_loading = false;
             if (res.data.data == true) {
               this.config.dialog_visible = false;
               this.$message("编辑成功");
@@ -320,6 +307,7 @@
       }
     },
     mounted: function () {
+      this.getAllRoles();
       this.getUserData();
     }
   }

@@ -24,7 +24,8 @@
         </el-col>
         <el-col :span="4">
           <el-form-item>
-            <el-button type="primary" @click="add_type.flag && addType()">添加种类</el-button>
+            <el-button type="primary" @click="add_type.flag && addType()" v-loading="config.add_button_loading">添加种类
+            </el-button>
           </el-form-item>
         </el-col>
       </el-form>
@@ -32,7 +33,7 @@
 
     <!--结果表格-->
     <el-table :data="type_table_data" style="width: 100%" v-loading="config.table_loading">
-      <el-table-column type="index"></el-table-column>
+      <el-table-column type="index" width="80"></el-table-column>
       <el-table-column v-if="false">
         <template scope="scope">
           <el-tag>{{ scope.row.id }}</el-tag>
@@ -72,7 +73,7 @@
       <br><br>
       <span slot="footer" class="dialog-footer">
     <el-button @click="config.dialog_visible = false">取 消</el-button>
-    <el-button type="primary" @click="submitEdit">确 定</el-button>
+    <el-button type="primary" @click="submitEdit" v-loading="config.edit_button_loading">确 定</el-button>
       </span>
     </el-dialog>
 
@@ -96,7 +97,9 @@
       return {
         config: {
           dialog_visible: false,
-          table_loading: false
+          table_loading: false,
+          add_button_loading: false,
+          edit_button_loading: false
         },
         // 种类信息表格
         type_table_data: [],
@@ -129,8 +132,7 @@
         )
           .then((res) => {
             this.type_table_data = res.data.list;
-//              this.page.total = res.data.page.totalCount; TODO:总条数
-            this.page.total = 20;
+            this.page.total = res.data.page.totalCount;
             this.config.table_loading = false;
           });
       },
@@ -145,6 +147,7 @@
           return;
         }
         this.add_type.flag = false;
+        this.config.add_button_loading = true;
         axios.post('kind_addKind.ajax', qs.stringify({
             name: this.add_type.type,
             num: this.add_type.num
@@ -152,10 +155,11 @@
         )
           .then((res) => {
             this.add_type.flag = true;
+            this.config.add_button_loading = false;
             if (res.data.data === true) {
               this.$message({
                 type: 'success',
-                duration: 800,
+                duration: 1000,
                 message: '添加种类成功'
               });
               this.add_type.type = '';
@@ -186,7 +190,7 @@
               if (res.data.data === true) {
                 this.$message({
                   type: 'success',
-                  duration: 800,
+                  duration: 1000,
                   message: '删除成功!'
                 });
                 this.getTypeData();
@@ -202,7 +206,7 @@
         }).catch(() => {// 取消删除
           this.$message({
             type: 'info',
-            duration: 800,
+            duration: 1000,
             message: '已取消删除'
           });
         });
@@ -216,6 +220,7 @@
       },
       //提交编辑
       submitEdit() {
+        this.config.edit_button_loading = true;
         axios.post('kind_editKind.ajax', qs.stringify({
             id: this.edit.id,
             num: this.edit.num,
@@ -223,10 +228,11 @@
           })
         )
           .then((res) => {
+            this.config.edit_button_loading = false;
             if (res.data.data == true) {
               this.config.dialog_visible = false;
               this.$message({
-                duration: 800,
+                duration: 1000,
                 message: "编辑成功",
                 type: 'warning'
               });

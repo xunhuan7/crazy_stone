@@ -12,7 +12,7 @@
     <!--查询匝-->
     <el-col :span="24" class="toolbar">
       <el-form :inline="true">
-        <el-col :span="6">
+        <el-col :span="7">
           <el-form-item label="材料种类">
             <el-select v-model="query_bundle.query_type" placeholder="请选择">
               <el-option v-for="item in query_bundle.all_type" :key="item.id" :value="item.id"
@@ -20,17 +20,17 @@
             </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="7">
           <el-form-item label="匝编号">
             <el-input placeholder="选填" v-model="query_bundle.query_num"></el-input>
           </el-form-item>
         </el-col>
-        <el-col :span="10">
+        <el-col :span="7">
           <el-form-item>
             <el-button type="primary" icon="search" @click="getQueryBundleData">查询</el-button>
           </el-form-item>
         </el-col>
-        <el-col :span="2">
+        <el-col :span="3">
           <el-form-item>
             <el-button type="success" @click="addBundle">添加匝</el-button>
           </el-form-item>
@@ -221,8 +221,9 @@
       </span>
     </el-dialog>
 
-    <!--分页-->
-    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="currentChange"
+    <!--匝信息分页-->
+    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" :current-page="page.current_page"
+                   @current-change="currentChange"
                    style="float: right;margin-top: 20px">
     </el-pagination>
 
@@ -252,7 +253,9 @@
         query_bundle: {
           all_type: [],
           query_num: '',
-          query_type: ''
+          query_type: '',
+          // 是否查询：为true时调用查询分页
+          is_query: false
         },
         // 匝信息表格
         bundle_table_data: [],
@@ -284,8 +287,8 @@
       getStoneType() {
         axios.post('kind_queryAllKind.ajax')
           .then((res) => {
-              this.query_bundle.all_type = res.data.list;
               this.add_bundle.all_type = res.data.list;
+              this.query_bundle.all_type = res.data.list;
             }
           )
         ;
@@ -299,29 +302,31 @@
           })
         )
           .then((res) => {
-            this.bundle_table_data = res.data.list;
-//            this.page.total = res.data.page.totalCount; TODO:总条数
             this.config.bundle_table_loading = false;
+            this.bundle_table_data = res.data.list;
+            this.page.total = res.data.page.totalCount;
           });
       },
 
       // 根据种类、匝编号查询匝信息
       getQueryBundleData() {
         if (this.query_bundle.query_type == '' && this.query_bundle.query_num == '') {
-          this.getBundleData();
+          this.currentChange();
           return;
         }
         this.config.bundle_table_loading = true;
+        this.query_bundle.is_query = true;
         axios.post('stabKindAndSlate_queryStabKindByKindIdOrNum.ajax', qs.stringify({
             num: this.query_bundle.query_num,
-            id: this.query_bundle.query_type
+            id: this.query_bundle.query_type,
+            startPage: this.page.current_page
           })
         )
-          .then((res) => { // TODO:查询结果分页
-            this.bundle_table_data = res.data.list;
-            this.query_bundle.query_type = '';
-            this.query_bundle.query_num = '';
+          .then((res) => {
             this.config.bundle_table_loading = false;
+            this.bundle_table_data = res.data.list;
+            // 分页组件重写
+            this.page.total = res.data.page.totalCount;
           });
       },
 
@@ -345,9 +350,21 @@
 
       // 提交添加新匝
       submitAddBundle() {
-//        if () { // 数据过滤
-//          return;
-//        }
+        if (!this.add_bundle.add_type || !this.add_bundle.add_num || !this.add_bundle.add_slateName || !this.add_bundle.add_price) { // 数据过滤
+          this.$message({
+            message: '请填写完整信息',
+            type: 'warning',
+            duration: 1000
+          });
+          return;
+        } else if (!parseInt(this.add_bundle.add_price)) {
+          this.$message({
+            message: '价格必须为正整数',
+            type: 'warning',
+            duration: 1000
+          });
+          return;
+        }
         // 确认添加
         this.$confirm('确认添加吗?', '提示', {}).then(() => {
           let kind_id = this.add_bundle.add_type,
@@ -370,7 +387,7 @@
             kindId: kind_id,
             num: this.add_bundle.add_num,
             slateName: this.add_bundle.add_slateName,
-            price: this.add_bundle.add_price,
+            price: parseInt(this.add_bundle.add_price),
             description: this.add_bundle.add_description,
             data: data
           })
@@ -382,7 +399,7 @@
                 this.$message({
                   message: '添加匝成功',
                   type: 'info',
-                  duration: 800
+                  duration: 1000
                 });
               } else {
                 this.$message({
@@ -437,13 +454,13 @@
             })
           )
             .then((res) => {
+              this.config.output_button_loading = false;
               if (res.data.data === true) {
                 this.$message({
                   message: "出库成功",
                   type: 'success',
-                  duration: '800'
+                  duration: '1000'
                 });
-                this.config.output_button_loading = false;
                 this.config.output_bundle_visible = false;
                 this.getBundleData();
               } else {
@@ -460,7 +477,13 @@
       // 分页
       currentChange(page) {
         this.page.current_page = page;
-        this.getBundleData();
+        // 查询结果分页
+        if (this.query_bundle.is_query) {
+          this.getQueryBundleData();
+        } else {
+          // 所有分页
+          this.getBundleData();
+        }
       }
     },
     mounted: function () {

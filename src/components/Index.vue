@@ -5,7 +5,7 @@
     <!--头部导航-->
     <el-col :span="24" class="header">
       <el-col :span="4" class="role">权限：{{ user.role }}</el-col>
-      <el-col :span="14" class="enterprise">张钰臻别偷看</el-col>
+      <el-col :span="14" class="enterprise">后台管理系统</el-col>
       <el-col :span="6" class="user-info">欢迎您：{{user.username}}</el-col>
     </el-col>
 

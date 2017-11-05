@@ -1,4 +1,5 @@
 <template>
+
   <section>
 
     <!--面包屑导航-->
@@ -8,7 +9,7 @@
     </el-breadcrumb>
 
     <!--生成订单按钮-->
-    <el-col :span="24">
+    <el-col :span="24" class="gene_button">
       <el-col>
         <el-button type="primary" @click="showGenerateOrder">生成订单</el-button>
       </el-col>
@@ -34,13 +35,14 @@
       </el-row>
       <br>
       <!--成品表格-->
-      <el-table :data="product_table_data" ref="multipleTable" style="width: 100%" height="350">
+      <el-table :data="product_table_data" ref="multipleTable" style="width: 100%" height="350"
+                v-loading="config.product_button_loading">
         <el-table-column label="ID">
           <template scope="scope">
             <el-tag class="product_id">{{ scope.row.id }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="成品名">
+        <el-table-column label="成品名" width="200">
           <template scope="scope">
             <el-tag type="primary">{{ scope.row.slateName }}</el-tag>
           </template>
@@ -78,7 +80,7 @@
     </el-dialog>
 
     <!--订单表格-->
-    <el-table :data="order_table_data" style="width: 100%">
+    <el-table :data="order_table_data" style="width: 100%" v-loading="config.order_table_loading">
       <el-table-column type="index" width="50"></el-table-column>
       <el-table-column label="订单编号">
         <template scope="scope">
@@ -107,10 +109,17 @@
       </el-table-column>
     </el-table>
 
+    <!--分页-->
+    <el-pagination layout="prev, pager, next" :total="page.total" :page-size="15" @current-change="currentChange"
+                   style="float: right;margin-top: 20px">
+    </el-pagination>
+
   </section>
+
 </template>
 
 <script>
+
   import axios from 'axios';
   import $ from 'jquery';
 
@@ -120,8 +129,9 @@
     data() {
       return {
         config: {
-          id_show: false,
-          generate_order_visible: false
+          generate_order_visible: false,
+          order_table_loading: false,
+          product_button_loading: false
         },
         // 订单数据
         order_table_data: [],
@@ -132,43 +142,51 @@
         // 输入订单编号
         order_num: '',
         // 成品数据
-        product_table_data: []
+        product_table_data: [],
+        // 分页信息
+        page: {
+          current_page: 1,
+          total: 0
+        }
       }
     },
     methods: {
       //获取订单信息
       getOrderData() {
-        let self = this;
-        axios.post("order_queryAllOrder.ajax")
-          .then(function (res) {
-            self.order_table_data = res.data.list;
+        this.config.order_table_loading = true;
+        axios.post("order_queryAllOrder.ajax", qs.stringify({
+          startPage: this.page.current_page
+        }))
+          .then((res) => {
+            this.config.order_table_loading = false;
+            this.order_table_data = res.data.list;
+            this.page.total = res.data.page.totalCount;
           });
       },
       // 调出生成订单模态框
       showGenerateOrder() {
-        let self = this;
-        self.config.generate_order_visible = true;
+        this.config.generate_order_visible = true;
+        this.config.product_button_loading = true;
         axios.post("development_queryAllDevelopment.ajax")
-          .then(function (res) {
-            self.product_table_data = res.data.list;
+          .then((res) => {
+            this.product_table_data = res.data.list;
+            this.config.product_button_loading = false;
           });
       },
       // 获取客户信息
       getCustomData() {
-        let self = this;
         axios.post('customer_queryAllCustomer.ajax')
-          .then(function (res) {
-            self.customers = res.data.list;
+          .then((res) => {
+            this.customers = res.data.list;
           });
       },
       // 提交生成订单
       submitGenerateOrder() {
-        let self = this,
-          customer_id,
+        let customer_id,
           data = [];
         // 根据客户名获取客户ID:customerId
-        self.customers.forEach(function (item) {
-          if (item.name == self.customer) {
+        this.customers.forEach((item) => {
+          if (item.name == this.customer) {
             customer_id = item.id;
             return true;
           }
@@ -188,17 +206,22 @@
         });
         axios.post("order_addOrder.ajax", {
           customerId: customer_id,
-          orderNum: self.order_num,
+          orderNum: this.order_num,
           data: data
         })
-          .then(function (res) {
+          .then((res) => {
             if (res.data.data) {
-              self.config.generate_order_visible = false;
-              self.getOrderData();
+              this.config.generate_order_visible = false;
+              this.getOrderData();
             } else {
-              self.$message(res.data.msg);
+              this.$message(res.data.msg);
             }
           });
+      },
+      // 分页
+      currentChange(page) {
+        this.page.current_page = page;
+        this.getOrderData();
       }
     },
     mounted: function () {
@@ -206,9 +229,11 @@
       this.getCustomData();
     }
   }
+
 </script>
 
 <style scoped>
+
   * {
     margin: 0;
   }
@@ -217,4 +242,9 @@
     float: right;
     margin-bottom: 10px;
   }
+
+  .gene_button {
+    margin-bottom: 15px;
+  }
+
 </style>

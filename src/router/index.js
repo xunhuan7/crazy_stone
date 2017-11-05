@@ -18,7 +18,7 @@ import order from '@/components/order/order.vue';
 Vue.use(Router);
 Vue.use(ElementUI);
 
-axios.defaults.baseURL = 'http://192.168.1.108:8080/XJS/';
+axios.defaults.baseURL = 'http://192.168.1.103:8080/XJS/';
 axios.defaults.timeout = 10000;
 // 是否使用跨域请求
 axios.defaults.withCredentials = true;
