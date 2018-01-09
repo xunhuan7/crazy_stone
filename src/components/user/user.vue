@@ -159,11 +159,16 @@
       getUserData() {
         this.config.table_loading = true;
         axios.post('user_queryAllUsers.ajax', qs.stringify({
-            startPage: this.page.current_page
+            startPage: this.page.current_page,
           })
         )
           .then((res) => {
-            this.bundle_table_data = res.data.list;
+            let filterResult = res.data.list.filter(function (item) {
+              item.roleList.forEach(function (i) {
+                return i.id !== 1;
+              });
+            });
+            this.bundle_table_data = filterResult;
             this.page.total = res.data.page.totalCount;
             this.config.table_loading = false;
           });
